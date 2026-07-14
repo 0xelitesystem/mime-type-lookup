@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MIME Type Lookup</title>
+<meta name="description" content="Fast searchable lookup between file extensions and MIME (media) types, both directions. Around 200 common types built in. Runs entirely in your browser, no external dependencies, works offline.">
+<link rel="canonical" href="https://0xelitesystem.github.io/mime-type-lookup/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="MIME Type Lookup">
+<meta property="og:description" content="Search file extensions to MIME types and back. Around 200 common types built in. Runs entirely in your browser.">
+<meta property="og:url" content="https://0xelitesystem.github.io/mime-type-lookup/">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "MIME Type Lookup",
+  "description": "Fast searchable lookup between file extensions and MIME (media) types, both directions. Around 200 common types built in. Runs entirely in your browser.",
+  "url": "https://0xelitesystem.github.io/mime-type-lookup/",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "Any",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "author": { "@type": "Organization", "name": "0xelitesystem" }
+}
+</script>
+<style>
+:root {
+  --bg: #fafaf6;
+  --surface: #ffffff;
+  --ink: #0a1d1e;
+  --ink-soft: #2c4a4c;
+  --rule: #c8d4d3;
+  --teal: #0f5c60;
+  --teal-deep: #0a4548;
+  --gold: #b07d2a;
+  --gold-deep: #8a611f;
+  --ok: #1a5c2e;
+  --warn: #8a5a00;
+  --err: #8b1a1a;
+  --code-bg: #f0ebe1;
+}
+[data-theme="dark"] {
+  --bg: #0c1c1d;
+  --surface: #14292a;
+  --ink: #e8ebe6;
+  --ink-soft: #b0c0bd;
+  --rule: #2a4042;
+  --teal: #4ab4ba;
+  --teal-deep: #6dc8ce;
+  --gold: #d4a155;
+  --gold-deep: #e6b876;
+  --ok: #6dd380;
+  --warn: #d4a155;
+  --err: #e88080;
+  --code-bg: #0a1718;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: ui-serif, Georgia, "Times New Roman", serif;
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  line-height: 1.55;
+}
+.wrap { max-width: 1100px; margin: 0 auto; }
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  border-bottom: 2px solid var(--teal);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+h1 {
+  font-size: 1.75rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--teal);
+}
+.tag {
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 0.75rem;
+  color: var(--gold-deep);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+[data-theme="dark"] .tag { color: var(--gold); }
+.theme-btn {
+  background: transparent;
+  border: 1px solid var(--rule);
+  color: var(--ink-soft);
+  padding: 0.4rem 0.85rem;
+  font-size: 0.8rem;
+  font-family: inherit;
+  cursor: pointer;
+  border-radius: 2px;
+}
+.theme-btn:hover { border-color: var(--teal); color: var(--teal); }
+.lede {
+  font-size: 0.95rem;
+  color: var(--ink-soft);
+  margin-bottom: 1.75rem;
+  max-width: 62ch;
+}
+.input-box {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+  border-radius: 3px;
+}
+label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
+  display: block;
+  margin-bottom: 0.5rem;
+}
+input[type="text"] {
+  width: 100%;
+  background: var(--code-bg);
+  border: 1px solid var(--rule);
+  color: var(--ink);
+  padding: 0.75rem 0.85rem;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 0.95rem;
+  border-radius: 2px;
+}
+input[type="text"]:focus { outline: 2px solid var(--teal); outline-offset: 1px; }
+.input-row {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+button {
+  font-family: inherit;
+  font-size: 0.85rem;
+  padding: 0.6rem 1.1rem;
+  border: 1px solid var(--rule);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  border-radius: 2px;
+}
+button:hover { border-color: var(--teal); }
+.filter-btn.active {
+  background: var(--teal);
+  border-color: var(--teal);
+  color: var(--surface);
+  font-weight: 600;
+}
+[data-theme="dark"] .filter-btn.active { color: var(--bg); }
+.count {
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  margin-left: auto;
+}
+.table-wrap {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  overflow-x: auto;
+}
+table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+thead th {
+  text-align: left;
+  padding: 0.7rem 0.85rem;
+  border-bottom: 2px solid var(--rule);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+}
+tbody td {
+  padding: 0.6rem 0.85rem;
+  border-bottom: 1px solid var(--rule);
+  vertical-align: top;
+}
+tbody tr:last-child td { border-bottom: none; }
+.ext, .mime {
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 0.82rem;
+  color: var(--ink);
+}
+.mime { color: var(--teal-deep); }
+[data-theme="dark"] .mime { color: var(--teal-deep); }
+.desc { color: var(--ink-soft); font-size: 0.82rem; }
+.badge {
+  display: inline-block;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 0.66rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 2px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.badge-iana { background: var(--code-bg); color: var(--ok); border: 1px solid var(--rule); }
+.badge-common { background: var(--code-bg); color: var(--warn); border: 1px solid var(--rule); }
+mark { background: rgba(176,125,42,0.28); color: inherit; padding: 0 0.05em; border-radius: 1px; }
+.empty { padding: 1.5rem 0.85rem; color: var(--ink-soft); font-style: italic; font-family: ui-serif, Georgia, serif; }
+.privacy-note {
+  font-size: 0.78rem;
+  color: var(--gold-deep);
+  margin-top: 0.75rem;
+}
+[data-theme="dark"] .privacy-note { color: var(--gold); }
+footer {
+  margin-top: 3rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--rule);
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+}
+footer a { color: var(--teal); text-decoration: none; }
+footer a:hover { text-decoration: underline; }
+@media (max-width: 640px) {
+  body { padding: 1rem 0.75rem; }
+  h1 { font-size: 1.4rem; }
+  .desc { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div>
+    <h1>MIME Type Lookup</h1>
+    <div class="tag">Extensions and media types, both ways</div>
+  </div>
+  <button class="theme-btn" id="theme-toggle" type="button">Dark</button>
+</header>
+
+<p class="lede">Type a file extension (like <code>.webp</code>) to find its MIME type, or type a MIME type to find matching extensions, or free-text search across everything. Around 200 common types are built in. Nothing leaves this page.</p>
+
+<div class="input-box">
+  <label for="q">Search</label>
+  <input type="text" id="q" placeholder="webp   or   image/   or   font   or   application/json" spellcheck="false" autocapitalize="off" autocorrect="off" autocomplete="off">
+  <div class="input-row">
+    <button class="filter-btn active" data-filter="all" type="button">All</button>
+    <button class="filter-btn" data-filter="ext" type="button">By extension</button>
+    <button class="filter-btn" data-filter="mime" type="button">By MIME type</button>
+    <span class="count" id="count"></span>
+  </div>
+  <div class="privacy-note">All lookups run locally from a built-in table. No network requests are made.</div>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr><th style="width:14%">Extension</th><th style="width:34%">MIME type</th><th style="width:38%">Description</th><th style="width:14%">Registry</th></tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+</div>
+
+<footer>
+  <div>MIME Type Lookup. Open source, MIT licensed. Built by <a href="https://elitesystem.ai" target="_blank" rel="noopener">elitesystem.ai</a>.</div>
+  <div>IANA registered types are flagged; others are common conventions.</div>
+</footer>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+
+// Dataset: [extension, mimeType, description, iana]
+// iana = true when the media type is registered with IANA; false = common convention / vendor use.
+const DATA = [
+  // Text
+  ["txt","text/plain","Plain text",true],
+  ["csv","text/csv","Comma-separated values",true],
+  ["tsv","text/tab-separated-values","Tab-separated values",true],
+  ["html","text/html","HTML document",true],
+  ["htm","text/html","HTML document",true],
+  ["css","text/css","Cascading style sheet",true],
+  ["ics","text/calendar","iCalendar data",true],
+  ["md","text/markdown","Markdown document",true],
+  ["markdown","text/markdown","Markdown document",true],
+  ["vtt","text/vtt","WebVTT subtitles",true],
+  ["rtx","text/richtext","Rich text (legacy)",true],
+  ["sgml","text/sgml","SGML document",true],
+  ["yaml","text/yaml","YAML data (common)",false],
+  ["yml","text/yaml","YAML data (common)",false],
+  ["log","text/plain","Log file (served as plain text)",false],
+  ["ini","text/plain","INI config (served as plain text)",false],
+  ["conf","text/plain","Config file (served as plain text)",false],
+
+  // Application / structured
+  ["json","application/json","JSON data",true],
+  ["map","application/json","Source map (JSON)",false],
+  ["jsonld","application/ld+json","JSON-LD linked data",true],
+  ["xml","application/xml","XML document",true],
+  ["xhtml","application/xhtml+xml","XHTML document",true],
+  ["rss","application/rss+xml","RSS feed",false],
+  ["atom","application/atom+xml","Atom feed",true],
+  ["rdf","application/rdf+xml","RDF/XML data",true],
+  ["wsdl","application/wsdl+xml","WSDL service description",false],
+  ["js","text/javascript","JavaScript source",true],
+  ["mjs","text/javascript","ES module JavaScript",true],
+  ["wasm","application/wasm","WebAssembly module",true],
+  ["pdf","application/pdf","Portable Document Format",true],
+  ["ps","application/postscript","PostScript",true],
+  ["eps","application/postscript","Encapsulated PostScript",false],
+  ["ai","application/postscript","Adobe Illustrator (PostScript)",false],
+  ["rtf","application/rtf","Rich Text Format",true],
+  ["doc","application/msword","Microsoft Word (legacy)",true],
+  ["docx","application/vnd.openxmlformats-officedocument.wordprocessingml.document","Microsoft Word (OOXML)",true],
+  ["dot","application/msword","Word template (legacy)",true],
+  ["xls","application/vnd.ms-excel","Microsoft Excel (legacy)",true],
+  ["xlsx","application/vnd.openxmlformats-officedocument.spreadsheetml.sheet","Microsoft Excel (OOXML)",true],
+  ["ppt","application/vnd.ms-powerpoint","Microsoft PowerPoint (legacy)",true],
+  ["pptx","application/vnd.openxmlformats-officedocument.presentationml.presentation","Microsoft PowerPoint (OOXML)",true],
+  ["odt","application/vnd.oasis.opendocument.text","OpenDocument text",true],
+  ["ods","application/vnd.oasis.opendocument.spreadsheet","OpenDocument spreadsheet",true],
+  ["odp","application/vnd.oasis.opendocument.presentation","OpenDocument presentation",true],
+  ["odg","application/vnd.oasis.opendocument.graphics","OpenDocument graphics",true],
+  ["epub","application/epub+zip","EPUB e-book",true],
+  ["mobi","application/x-mobipocket-ebook","Mobipocket e-book (common)",false],
+  ["azw","application/vnd.amazon.ebook","Kindle e-book",true],
+  ["bin","application/octet-stream","Arbitrary binary data",true],
+  ["exe","application/octet-stream","Windows executable (common)",false],
+  ["msi","application/x-msdownload","Windows installer (common)",false],
+  ["dll","application/octet-stream","Dynamic link library (common)",false],
+  ["dmg","application/x-apple-diskimage","Apple disk image (common)",false],
+  ["iso","application/x-iso9660-image","ISO disk image (common)",false],
+  ["deb","application/vnd.debian.binary-package","Debian package",true],
+  ["rpm","application/x-rpm","RPM package (common)",false],
+  ["apk","application/vnd.android.package-archive","Android package",true],
+  ["swf","application/x-shockwave-flash","Shockwave Flash (common)",false],
+  ["ttf","font/ttf","TrueType font",true],
+  ["otf","font/otf","OpenType font",true],
+  ["woff","font/woff","Web Open Font Format",true],
+  ["woff2","font/woff2","Web Open Font Format 2",true],
+  ["eot","application/vnd.ms-fontobject","Embedded OpenType font",true],
+  ["sfnt","font/sfnt","SFNT font wrapper",true],
+  ["sql","application/sql","SQL script",true],
+  ["db","application/vnd.sqlite3","SQLite database (common)",false],
+  ["sqlite","application/vnd.sqlite3","SQLite database (common)",false],
+  ["p7s","application/pkcs7-signature","PKCS#7 signature",true],
+  ["p12","application/x-pkcs12","PKCS#12 key store",true],
+  ["cer","application/pkix-cert","X.509 certificate",true],
+  ["crt","application/x-x509-ca-cert","X.509 CA certificate (common)",false],
+  ["pem","application/x-pem-file","PEM key or cert (common)",false],
+  ["key","application/pkcs8","PKCS#8 private key",true],
+  ["proto","text/plain","Protocol Buffers schema (served as text)",false],
+  ["ipynb","application/x-ipynb+json","Jupyter notebook (common)",false],
+
+  // Images
+  ["png","image/png","PNG image",true],
+  ["jpg","image/jpeg","JPEG image",true],
+  ["jpeg","image/jpeg","JPEG image",true],
+  ["jpe","image/jpeg","JPEG image",true],
+  ["jfif","image/jpeg","JPEG (JFIF)",false],
+  ["gif","image/gif","GIF image",true],
+  ["webp","image/webp","WebP image",true],
+  ["avif","image/avif","AVIF image",true],
+  ["bmp","image/bmp","Bitmap image",true],
+  ["ico","image/vnd.microsoft.icon","Windows icon",true],
+  ["cur","image/vnd.microsoft.icon","Windows cursor (common)",false],
+  ["svg","image/svg+xml","Scalable Vector Graphics",true],
+  ["svgz","image/svg+xml","Gzipped SVG (common)",false],
+  ["tif","image/tiff","TIFF image",true],
+  ["tiff","image/tiff","TIFF image",true],
+  ["heic","image/heic","HEIC image",true],
+  ["heif","image/heif","HEIF image",true],
+  ["jxl","image/jxl","JPEG XL image",true],
+  ["psd","image/vnd.adobe.photoshop","Photoshop document",true],
+  ["dds","image/vnd.ms-dds","DirectDraw Surface (common)",false],
+  ["xcf","image/x-xcf","GIMP image (common)",false],
+  ["apng","image/apng","Animated PNG",true],
+  ["dng","image/x-adobe-dng","Digital Negative RAW (common)",false],
+  ["cr2","image/x-canon-cr2","Canon RAW (common)",false],
+  ["nef","image/x-nikon-nef","Nikon RAW (common)",false],
+
+  // Audio
+  ["mp3","audio/mpeg","MP3 audio",true],
+  ["m4a","audio/mp4","MPEG-4 audio",true],
+  ["aac","audio/aac","AAC audio",true],
+  ["oga","audio/ogg","Ogg audio",true],
+  ["ogg","audio/ogg","Ogg audio",true],
+  ["opus","audio/ogg","Opus audio in Ogg",false],
+  ["wav","audio/wav","WAV audio",false],
+  ["weba","audio/webm","WebM audio",true],
+  ["flac","audio/flac","FLAC audio (common)",false],
+  ["mid","audio/midi","MIDI (common)",false],
+  ["midi","audio/midi","MIDI (common)",false],
+  ["aif","audio/aiff","AIFF audio (common)",false],
+  ["aiff","audio/aiff","AIFF audio (common)",false],
+  ["wma","audio/x-ms-wma","Windows Media Audio (common)",false],
+  ["amr","audio/amr","Adaptive Multi-Rate audio",true],
+  ["3ga","audio/3gpp","3GPP audio",true],
+
+  // Video
+  ["mp4","video/mp4","MPEG-4 video",true],
+  ["m4v","video/mp4","MPEG-4 video",false],
+  ["mpeg","video/mpeg","MPEG video",true],
+  ["mpg","video/mpeg","MPEG video",true],
+  ["webm","video/webm","WebM video",true],
+  ["ogv","video/ogg","Ogg video",true],
+  ["mov","video/quicktime","QuickTime movie",true],
+  ["qt","video/quicktime","QuickTime movie",true],
+  ["avi","video/x-msvideo","AVI video (common)",false],
+  ["wmv","video/x-ms-wmv","Windows Media Video (common)",false],
+  ["flv","video/x-flv","Flash video (common)",false],
+  ["mkv","video/x-matroska","Matroska video (common)",false],
+  ["3gp","video/3gpp","3GPP video",true],
+  ["3g2","video/3gpp2","3GPP2 video",true],
+  ["ts","video/mp2t","MPEG-2 transport stream",true],
+  ["m3u8","application/vnd.apple.mpegurl","HLS playlist",true],
+  ["m3u","audio/x-mpegurl","M3U playlist (common)",false],
+
+  // Archives / compression
+  ["zip","application/zip","ZIP archive",true],
+  ["gz","application/gzip","Gzip archive",true],
+  ["tgz","application/gzip","Gzipped tar (common)",false],
+  ["tar","application/x-tar","Tar archive (common)",false],
+  ["bz2","application/x-bzip2","Bzip2 archive (common)",false],
+  ["xz","application/x-xz","XZ archive (common)",false],
+  ["7z","application/x-7z-compressed","7-Zip archive (common)",false],
+  ["rar","application/vnd.rar","RAR archive",true],
+  ["zst","application/zstd","Zstandard archive",true],
+  ["lz","application/x-lzip","Lzip archive (common)",false],
+  ["z","application/x-compress","Compress (.Z) archive (common)",false],
+  ["cab","application/vnd.ms-cab-compressed","Windows cabinet (common)",false],
+  ["jar","application/java-archive","Java archive",true],
+  ["war","application/java-archive","Java web archive (common)",false],
+
+  // Data / config / dev
+  ["toml","application/toml","TOML config (common)",false],
+  ["env","text/plain","Env file (served as plain text)",false],
+  ["csr","application/pkcs10","Certificate signing request",true],
+  ["har","application/json","HTTP Archive (JSON)",false],
+  ["geojson","application/geo+json","GeoJSON",true],
+  ["kml","application/vnd.google-earth.kml+xml","Keyhole Markup Language",true],
+  ["kmz","application/vnd.google-earth.kmz","Zipped KML",true],
+  ["gpx","application/gpx+xml","GPS Exchange Format (common)",false],
+  ["parquet","application/vnd.apache.parquet","Apache Parquet (common)",false],
+  ["avro","application/avro","Apache Avro",true],
+  ["proto3","text/plain","Protocol Buffers schema (served as text)",false],
+
+  // Fonts extra + misc web
+  ["webmanifest","application/manifest+json","Web app manifest",true],
+  ["manifest","application/manifest+json","Web app manifest (common)",false],
+  ["appcache","text/cache-manifest","App cache manifest (legacy)",true],
+  ["xsl","application/xslt+xml","XSLT stylesheet (common)",false],
+  ["xslt","application/xslt+xml","XSLT stylesheet (common)",false],
+  ["dtd","application/xml-dtd","XML DTD",true],
+  ["torrent","application/x-bittorrent","BitTorrent metadata (common)",false],
+  ["vcf","text/vcard","vCard contact",true],
+  ["p10","application/pkcs10","Certificate signing request",true],
+  ["mml","application/mathml+xml","MathML",true],
+  ["gml","application/gml+xml","Geography Markup Language",true],
+  ["srt","application/x-subrip","SubRip subtitles (common)",false],
+  ["sub","text/plain","Subtitle text (common)",false],
+  ["dxf","image/vnd.dxf","AutoCAD DXF (common)",false],
+  ["dwg","image/vnd.dwg","AutoCAD DWG (common)",false],
+  ["stl","model/stl","STL 3D model",true],
+  ["obj","model/obj","OBJ 3D model (common)",false],
+  ["gltf","model/gltf+json","glTF 3D model",true],
+  ["glb","model/gltf-binary","Binary glTF",true],
+  ["usdz","model/vnd.usdz+zip","USDZ 3D model (common)",false],
+  ["ply","model/mesh","Polygon 3D mesh (common)",false],
+  ["ttl","text/turtle","RDF Turtle",true],
+  ["n3","text/n3","Notation3 RDF",true],
+  ["nq","application/n-quads","RDF N-Quads",true],
+  ["nt","application/n-triples","RDF N-Triples",true]
+];
+
+let activeFilter = "all";
+
+function escapeHtml(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+function escapeReg(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+function highlight(text, q) {
+  const safe = escapeHtml(text);
+  if (!q) return safe;
+  try {
+    const re = new RegExp("(" + escapeReg(escapeHtml(q)) + ")", "ig");
+    return safe.replace(re, "<mark>$1</mark>");
+  } catch (e) { return safe; }
+}
+
+function matches(row, q) {
+  const [ext, mime, desc] = row;
+  const nq = q.toLowerCase();
+  if (!nq) return true;
+  if (activeFilter === "ext") return ext.toLowerCase().includes(nq);
+  if (activeFilter === "mime") return mime.toLowerCase().includes(nq);
+  return ext.toLowerCase().includes(nq) || mime.toLowerCase().includes(nq) || desc.toLowerCase().includes(nq);
+}
+
+function render() {
+  let q = $("q").value.trim();
+  // Tolerate a leading dot on extensions: ".webp" -> "webp"
+  const qNorm = q.replace(/^\./, "");
+  const list = DATA.filter((r) => matches(r, qNorm));
+  const rowsEl = $("rows");
+  if (list.length === 0) {
+    rowsEl.innerHTML = `<tr><td colspan="4" class="empty">No match for "${escapeHtml(q)}". Try an extension like "png", a MIME type like "image/", or a keyword like "font".</td></tr>`;
+    $("count").textContent = "0 of " + DATA.length;
+    return;
+  }
+  const parts = [];
+  for (const [ext, mime, desc, iana] of list) {
+    parts.push(
+      "<tr>" +
+      `<td class="ext">.${highlight(ext, qNorm)}</td>` +
+      `<td class="mime">${highlight(mime, qNorm)}</td>` +
+      `<td class="desc">${highlight(desc, qNorm)}</td>` +
+      `<td>${iana ? '<span class="badge badge-iana">IANA</span>' : '<span class="badge badge-common">common</span>'}</td>` +
+      "</tr>"
+    );
+  }
+  rowsEl.innerHTML = parts.join("");
+  $("count").textContent = list.length + " of " + DATA.length;
+}
+
+// Theme
+const themeBtn = $("theme-toggle");
+function setTheme(t) {
+  document.documentElement.setAttribute("data-theme", t);
+  themeBtn.textContent = t === "dark" ? "Light" : "Dark";
+}
+themeBtn.addEventListener("click", () => {
+  const cur = document.documentElement.getAttribute("data-theme") || "light";
+  setTheme(cur === "dark" ? "light" : "dark");
+});
+
+// Filters
+document.querySelectorAll(".filter-btn").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".filter-btn").forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
+    activeFilter = btn.dataset.filter;
+    render();
+  });
+});
+
+$("q").addEventListener("input", render);
+
+setTheme("light");
+render();
+</script>
+</body>
+</html>
