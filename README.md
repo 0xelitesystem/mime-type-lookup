@@ -2,9 +2,17 @@
 
 A fast, searchable lookup between file extensions and MIME (media) types, in both directions. Around 200 common types are built in as an inline table, so it works with no external dependencies and works offline.
 
-## Live demo
+**Live demo:** https://0xelitesystem.github.io/mime-type-lookup/
 
-https://0xelitesystem.github.io/mime-type-lookup/
+## Use
+
+1. Type a file extension (`.webp` or `webp`) or a MIME type (`image/` or `application/json`) into the search box.
+2. Narrow the search with **All**, **By extension** or **By MIME type**.
+3. Read the matching rows. Each is marked IANA for a registered type or common for a convention.
+
+## Why this exists
+
+Looking up a MIME type usually means a web search for a one-line answer. This tool keeps the table in the page and filters it as you type, in either direction, offline. It is one HTML file that runs in your browser, with no tracking and no server, under the MIT license.
 
 ## Features
 
@@ -24,6 +32,21 @@ The full dataset is embedded in the page as an inline JavaScript array. Typing f
 ## Privacy
 
 Everything runs in your browser. There are no network requests, no analytics, and no external scripts. Open the page source or the DevTools network tab to confirm nothing leaves your machine.
+
+The only thing written to storage is your light or dark theme choice, saved in `localStorage` under the key `theme`.
+
+## Run locally
+
+```bash
+git clone https://github.com/0xelitesystem/mime-type-lookup
+cd mime-type-lookup
+```
+
+Open `index.html` in any modern browser. Or serve the folder with `python -m http.server 8000` and visit http://localhost:8000/.
+
+## Build
+
+No build step. The whole tool is one `index.html` file with its CSS and JavaScript inline, and nothing to install.
 
 ## More
 
